@@ -94,17 +94,17 @@
 	
 	<distributionManagement>
 	
-	    <repository>
+	    <Releaserepository>
 	      <id>nexus</id>
 	      <name>Mithun Technologies Releases Nexus Repository</name>
-	      <url>http://172.31.45.41:9980/mithuntechnologies/repository/facebook-releases/</url>
-	    </repository>
+	      <url>http://35.154.128.6:8090/mithuntech/repository/wallmart-release/</url>
+	    </Releaserepository>
 	    
-	    <snapshotRepository>
+	    <SnapshotRepository>
 	      <id>nexus</id>
 	      <name>Mithun Technologies Snapshot Nexus Repository </name>
-	      <url>http://172.31.45.41:9980/mithuntechnologies/repository/facebook-snapshot/</url>
-	    </snapshotRepository>
+	      <url>http://35.154.128.6:8090/mithuntech/repository/wallmart-snapshot/</url>
+	    </SnapshotRepository>
 	    
 	</distributionManagement>
 	
