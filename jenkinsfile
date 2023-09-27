@@ -15,7 +15,7 @@ stage ("Build the maven pkg")
 {
 sh "${mavenHome}/bin/mvn clean package"
 }
-
+/*    
 stage ("Generating SonarQube Report")
 {
 sh "${mavenHome}/bin/mvn sonar:sonar"
@@ -40,5 +40,5 @@ emailext body: '''Build Over.....
 Thanks
 Santosh Panchal''', subject: 'Build Over....', to: 'panchal.santosh1986@gmail.com'
 }
-
+*/
 }
