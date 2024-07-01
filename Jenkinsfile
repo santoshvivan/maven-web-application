@@ -1,5 +1,3 @@
-#This is Pipeline-Script Scripted-Way
-
 node
 {
 
