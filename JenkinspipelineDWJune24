@@ -35,7 +35,6 @@ sh "mvn clean package"
 }
 
 
-/*
 stage ("Generating SonarQube Report"){
 
 steps{
@@ -75,7 +74,7 @@ sh 'scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@3.
 }
 
 }
-*/
+
 }
 
 post{
@@ -91,4 +90,5 @@ Santosh Panchal''', subject: 'Build Over.......', to: 'panchal.santosh1986@gmail
 
 }
 
+}
 }
