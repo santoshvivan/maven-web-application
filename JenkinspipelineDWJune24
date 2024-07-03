@@ -1,0 +1,95 @@
+pipeline{
+
+agent any;
+
+tools{
+maven "maven3.9.0"
+}
+
+options{ 
+timestamps()
+cleanws() 
+}
+
+
+stages{
+
+stage ("Get the code from Github"){
+
+steps{
+
+git branch: 'development', credentialsId: '782eb40d-250d-4618-8713-935a737fe019', url: 'https://github.com/santoshvivan/maven-web-application.git'
+
+}
+
+}
+
+
+
+stage ("Build the package in Maven"){
+
+steps{
+
+sh "mvn clean package"
+
+}
+
+
+
+stage ("Generating SonarQube Report"){
+
+steps{
+
+sh "mvn sonar:sonar"
+
+}
+}
+
+
+}
+
+
+
+stage ("Upload artifact to Nexus"){
+
+steps{
+
+sh "mvn deploy"
+
+}
+
+}
+
+
+
+stage ("Deploy app to Tomcat"){
+
+steps{
+
+sshagent(['debca62c-3cbf-4dc9-8b52-2eb514fa1e63']) {
+    
+sh 'scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@3.111.41.185:/opt/apache-tomcat-9.0.89/webapps' 	
+	
+}
+
+}
+
+}
+
+}
+
+post{
+
+success{
+
+emailext body: '''Build Over....
+
+Thanks
+Santosh Panchal''', subject: 'Build Over.......', to: 'panchal.santosh1986@gmail.com'
+
+}
+
+}
+
+
+}
