@@ -11,7 +11,7 @@ git branch: 'development', credentialsId: '45d65bab-5315-4e98-92e7-a84046d92178'
 stage ("Build the package in Maven"){
 sh "${mavenHome}/bin/mvn clean package"
 }
-
+/*
 stage ("Generate SonarQube Report"){
 sh "${mavenHome}/bin/mvn sonar:sonar"
 }
@@ -31,5 +31,5 @@ emailext body: '''Build Status.....
 Thanks
 Santosh''', subject: 'Build Status....', to: 'panchal.santosh1986@gmail.com'
 }
-
+*/
 }
