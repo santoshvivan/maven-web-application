@@ -11,7 +11,7 @@ git branch: 'development', credentialsId: '45d65bab-5315-4e98-92e7-a84046d92178'
 stage ("Build the package in Maven"){
 sh "${mavenHome}/bin/mvn clean package"
 }
-
+/*
 stage ("Generate SonarQube Report"){
 sh "${mavenHome}/bin/mvn sonar:sonar"
 }
@@ -22,7 +22,7 @@ sh "${mavenHome}/bin/mvn deploy"
 
 stage ("Deploy App In Tomcat")
 sshagent(['568034ac-132c-427c-8d58-c148b3edb468']) {
-sh 'scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@13.200.254.153:/opt/apache-tomcat-9.0.97/webapps'
+sh 'scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@13.234.120.24:/opt/apache-tomcat-9.0.97/webapps'
 }
 
 stage ("Email Notification"){
@@ -31,5 +31,5 @@ emailext body: '''Build Status.....
 Thanks
 Santosh''', subject: 'Build Status....', to: 'panchal.santosh1986@gmail.com'
 }
-
+*/
 }
