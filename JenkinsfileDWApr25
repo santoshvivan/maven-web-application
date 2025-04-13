@@ -1,0 +1,68 @@
+pipeline{
+
+agent any;
+
+tools{
+maven 'maven3.9.1'
+}
+
+options{
+timestamps()
+}
+
+stages{
+stage ("get the code from git"){
+steps{
+git branch: 'development', credentialsId: '9d586cbb-8588-4791-8ed9-37f5a78f7a27', url: 'https://github.com/santoshvivan/maven-web-application.git'
+}
+}
+
+stage ("build the package in maven"){
+steps{
+sh "mvn clean package"
+}
+}
+/*
+stage ("generate sonarqube report"){
+steps{
+sh "mvn sonar:sonar
+}
+}
+
+stage ("copy artifact into nexus"){
+steps{
+sh "mvn deploy"
+}
+}
+
+stage ("deploy app to tomcat"){
+steps{
+sshagent(['7b353228-1b88-44bd-a23b-12f9201fc191']) {
+    sh 'scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@3.111.157.61:/opt/apache-tomcat-9.0.102/webapps'
+}
+}
+}
+*/
+}
+post{
+
+success{
+emailext body: '''Build Over....Success
+Thanks
+Santosh Panchal''', subject: 'Build Over.....Successfully', to: 'panchal.vivaan2015@gmail.com'
+}
+
+failure{
+emailext body: '''Build Over....Failed
+Thanks
+Santosh Panchal''', subject: 'Build Over.....Failed', to: 'panchal.vivaan2015@gmail.com'
+}
+
+always{
+emailext body: '''Build Over....
+Thanks
+Santosh Panchal''', subject: 'Build Over.....', to: 'panchal.vivaan2015@gmail.com'
+}
+}
+
+}
