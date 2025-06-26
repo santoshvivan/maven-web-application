@@ -11,7 +11,7 @@
 <body>
 <h1 align="center">Welcome To DevOps </h1>
 <h1 align="center"> New Batch will be start in August 9th at 11.45 AM IST</h1> 
-<h1 align="center"> Teaching Real Time scnerios</h1>
+<h1 align="center"> Teaching Real Time scnerios.....</h1>
 <hr>
 <br>
 	<h1><h3> Server Side IP Address </h3><br>
