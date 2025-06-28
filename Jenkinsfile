@@ -1,5 +1,3 @@
-#Pipeline Script Scripted Way
-
 node {
 
 def mavenHome = tool name: "maven3.9.9" 
