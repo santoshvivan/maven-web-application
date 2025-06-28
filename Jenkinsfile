@@ -7,7 +7,7 @@ properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKe
 stage ("Get the code from GitHub"){
 git branch: 'development', credentialsId: 'GitHub Creds', url: 'https://github.com/santoshvivan/maven-web-application.git'
 }
-
+/*
 stage ("Build the package in maven"){
 sh "${mavenHome}/bin/mvn clean package"
 }
@@ -32,6 +32,5 @@ mail bcc: '', body: '''Build Status ...............
 Thanks
 Santosh Panchal''', cc: '', from: '', replyTo: '', subject: 'Build Status......', to: 'panchal.santosh1986@gmail.com'
 }
-
-
+*/
 }
