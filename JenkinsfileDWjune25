@@ -1,0 +1,77 @@
+pipeline {
+
+agent any;
+
+tools{
+maven 'maven3.9.9'    
+}
+
+options{ 
+timestamps() 
+}
+
+stages {
+
+stage ("Get the code from github"){
+steps {
+git branch: 'development', credentialsId: 'GitHub Creds', url: 'https://github.com/santoshvivan/maven-web-application.git'
+}
+}
+
+stage ("Build the package in maven"){
+steps {
+sh "mvn clean package"
+}
+}
+
+stage ("Generate the SonarQube Report"){
+steps {
+sh "mvn sonar:sonar"
+}
+}
+
+stage ("Copy artifact into nexus"){
+steps {
+sh "mvn deploy"
+}
+}
+
+stage ("Deploy app to tomcat"){
+steps {
+sshagent(['Tomcat Linux Creds']){
+sh 'scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@13.127.42.251:/opt/apache-tomcat-9.0.106/webapps' 
+}
+}
+}
+
+}
+
+post{
+success{
+	mail bcc: '', body: '''Build Over......Success.....
+
+Thanks
+Santosh Panchal
+''', cc: '', from: '', replyTo: '', subject: 'Build Status......', to: 'panchal.santosh1986@gmail.com'
+}
+
+failure{
+mail bcc: '', body: '''Build Over......Success.....
+
+Thanks
+Santosh Panchal
+''', cc: '', from: '', replyTo: '', subject: 'Build Status......', to: 'panchal.santosh1986@gmail.com'
+}
+
+always{
+mail bcc: '', body: '''Build Over......Success.....
+
+Thanks
+Santosh Panchal
+''', cc: '', from: '', replyTo: '', subject: 'Build Status......', to: 'panchal.santosh1986@gmail.com'
+}
+
+} 
+
+}
+
