@@ -20,7 +20,7 @@ stage ("Upload artifact into nexus repo"){
 sh "${mavenHome}/bin/mvn deploy"
 }
 
-stage ("Deploy application to tomcat"{
+stage ("Deploy application to tomcat"){
 sshagent(['Tomcat Creds']) {
 sh 'scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@10.10.10.168:/opt/apache-tomcat-9.0.109/webapps'    
 }
