@@ -7,11 +7,11 @@ properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKe
 stage ("Get the code from Github"){
 git branch: 'development', credentialsId: 'Github Credentials', url: 'https://github.com/santoshvivan/maven-web-application.git'
 }
-/*
+
 stage ("Build the maven package"){
 sh "${mavenHome}/bin/mvn clean package"
 }
-
+/*
 stage ("Generating sonarqube report"){
 sh "${mavenHome}/bin/mvn sonar:sonar"
 }
