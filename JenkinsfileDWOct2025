@@ -1,0 +1,56 @@
+pipeline{
+
+agent any;
+
+tools{
+maven 'maven3.9.9'
+}
+
+option{
+timestamps()
+}
+
+stages {
+
+stage ("Get the code from Github"){
+steps{
+git branch: 'development', credentialsId: 'Github Credentials', url: 'https://github.com/santoshvivan/maven-web-application.git'
+}
+}
+
+stage ("Build the package in Maven"){
+steps{
+sh "mvn clean package"
+}
+}
+
+stage ("Generate SonarQube Report"){
+steps{
+sh "mvn sonar:sonar"
+}
+}
+
+stage ("Copy artifact into "){
+steps{
+sh "mvn deploy"
+}
+}
+
+stage ("Deploying app into tomcat"){
+steps{
+sshagent(['Tomcat Creds']) {
+sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@10.10.10.168:/opt/apache-tomcat-9.0.109/webapps"
+}
+}
+}
+}
+
+post{
+success{
+emailext body: '''Build over....
+
+Thanks
+Santosh Panchal''', subject: 'DW Build Status.......', to: 'panchal.santosh1986@gmail.com'
+}
+}
+}
