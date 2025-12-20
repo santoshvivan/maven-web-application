@@ -2,6 +2,8 @@ image:
   repository: 203771687516.dkr.ecr.ap-south-1.amazonaws.com/maven-web-app
   tag: "0.0.1-1"   # Jenkins or ArgoCD Image Updater will change this
   pullPolicy: IfNotPresent
+imagePullSecrets:
+  - name: ecr-pull-secret
 replicaCount: 1
 service:
   type: ClusterIP
