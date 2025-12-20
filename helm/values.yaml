@@ -3,7 +3,8 @@ image:
   tag: "0.0.2-88"   # Jenkins or ArgoCD Image Updater will change this
   pullPolicy: IfNotPresent
 imagePullSecrets:
-  - name: ecr-pull-secretreplicaCount: 1
+  - name: ecr-pull-secret
+replicaCount: 1
 service:  type: ClusterIP
   port: 8080
 resources: {}
