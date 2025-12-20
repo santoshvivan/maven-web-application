@@ -1,4 +1,3 @@
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -7,18 +6,16 @@ metadata:
     app: {{ .Release.Name }}
 spec:
   replicas: {{ .Values.replicaCount }}
-  selector:
-    matchLabels:
-      app: {{ .Release.Name }}
-  template:
-    metadata:
-      labels:
-        app: {{ .Release.Name }}
-    spec:
-      {{- if .Values.imagePullSecrets }}
-      imagePullSecrets:
+  selector:    matchLabels:
+      app: {{ .Release.Name }}  template:
+    metadata:      labels:
+        app: {{ .Release.Name }}    spec:
+      {{- if .Values.imagePullSecrets }}      imagePullSecrets:
         {{- range .Values.imagePullSecrets }}
-        - name: {{ . }}
+        {{- if kindIs "string" . }}
+        - name: {{ . }}        {{- else }}
+        - name: {{ .name }}
+        {{- end }}
         {{- end }}
       {{- end }}
       containers:
@@ -28,24 +25,26 @@ spec:
           ports:
             - name: http
               containerPort: 8080
+          {{- $cfg := (default dict .Values.config) -}}
+          {{- if (and (hasKey $cfg "enabled") (index $cfg "enabled")) }}
           env:
-            {{- if .Values.config.enabled }}
-            {{- range $k, $v := .Values.config.data }}
+            {{- $data := (default dict (index $cfg "data")) -}}
+            {{- range $k, $v := $data }}
             - name: {{ $k }}
               value: "{{ $v }}"
             {{- end }}
-            {{- end }}
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 8080
-            initialDelaySeconds: 10
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 8080
-            initialDelaySeconds: 20
-            periodSeconds: 20
+          {{- end }}
+          #readinessProbe:
+          #  httpGet:
+          #    path: /
+          #    port: 8080
+          #  initialDelaySeconds: 10
+          #  periodSeconds: 10
+          #livenessProbe:
+          #  httpGet:
+          #    path: /
+          #    port: 8080
+          #  initialDelaySeconds: 20
+          #  periodSeconds: 20
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
