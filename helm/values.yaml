@@ -5,7 +5,8 @@ image:
 imagePullSecrets:
   - name: ecr-pull-secret
 replicaCount: 1
-service:  type: ClusterIP
+service:  
+  type: ClusterIP
   port: 8080
 resources: {}
 
