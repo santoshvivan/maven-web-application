@@ -6,14 +6,20 @@ metadata:
     app: {{ .Release.Name }}
 spec:
   replicas: {{ .Values.replicaCount }}
-  selector:    matchLabels:
-      app: {{ .Release.Name }}  template:
-    metadata:      labels:
-        app: {{ .Release.Name }}    spec:
-      {{- if .Values.imagePullSecrets }}      imagePullSecrets:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
         {{- range .Values.imagePullSecrets }}
         {{- if kindIs "string" . }}
-        - name: {{ . }}        {{- else }}
+        - name: {{ . }}
+        {{- else }}
         - name: {{ .name }}
         {{- end }}
         {{- end }}
