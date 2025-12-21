@@ -1,0 +1,217 @@
+pipeline{
+
+agent any
+
+tools {
+jdk 'JDK17'
+maven 'Maven3.9.10'
+}
+
+environment{
+	SONARQUBE_ENV = 'SonarQubeServer'
+	AWS_REGION     = 'ap-south-1'                   // your region
+    AWS_ACCOUNT_ID = '203771687516'                 // your account ID
+    ECR_REPO       = 'maven-web-app'                // your ECR repo name
+    ECR_URI        = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
+    DOCKER_BUILDKIT = '1'
+}
+
+stages{
+	stage ("Clean Workspace"){
+		steps {
+			cleanWs()
+			}
+		}
+	
+	stage ("Get the code from Github"){
+		steps {
+			git branch: 'master', credentialsId: 'Github-Token-New', url: 'https://github.com/santoshvivan/maven-web-application.git'
+			}
+		}
+	
+    stage('Build with Maven') {
+      steps {
+        // Build & tests; Sonar benefits from compiled classes and test reports
+        sh '''
+          set -euxo pipefail
+          mvn -B -U -ntp clean verify
+        '''
+      }
+    }
+	
+
+    stage('SonarQube Analysis') {
+      steps {
+		withSonarQubeEnv("${SONARQUBE_ENV}") {
+			sh 'mvn sonar:sonar'
+                }
+            }
+        }
+
+    stage('Quality Gate') {
+      steps {
+        timeout(time: 5, unit: 'MINUTES') {
+          waitForQualityGate(abortPipeline: true)
+        }
+      }
+    }
+    
+    stage('Upload Artifact to Nexus') {
+	  steps {
+		withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+		  // Use the EXACT ID from Manage Jenkins → Managed files
+		  configFileProvider([configFile(fileId: '1fe9d2c7-6094-48bf-ad93-7cb032f0049e', targetLocation: 'settings.xml')]) {
+			sh '''
+			  echo "Using managed settings.xml from Config File Provider"
+			  mvn -B -s settings.xml -DskipTests clean deploy
+			'''
+		  }
+		}
+	  }
+	}
+	
+    stage('Preflight checks before Docker Build and Push') {
+      steps {
+        sh '''
+          set -e
+          echo "[Preflight] Checking required tools..."
+    
+          # Required tools
+          command -v git    >/dev/null || { echo "ERROR: git not found";    exit 1; }
+          command -v docker >/dev/null || { echo "ERROR: docker not found"; exit 1; }
+          command -v aws    >/dev/null || { echo "ERROR: aws CLI not found"; exit 1; }
+          command -v mvn    >/dev/null || { echo "ERROR: Maven not found on PATH (check tools { maven 'Maven3.9.10' })"; exit 1; }
+    
+          echo "[Preflight] Java:   $(java -version 2>&1 | head -n1)"
+          echo "[Preflight] Maven:  $(mvn -v | head -n1)"
+          echo "[Preflight] Docker: $(docker --version)"
+          echo "[Preflight] AWS:    $(aws --version)"
+        '''
+       }
+    }
+    
+
+
+ stage('Docker Build & Tag') {
+  environment {
+    IMAGE_NAME      = 'maven-web-app'
+    DOCKER_BUILDKIT = '1'
+  }
+  steps {
+    script {
+      // Read Maven version safely
+      def VERSION_RAW = sh(
+        script: "mvn -q -DforceStdout help:evaluate -Dexpression=project.version",
+        returnStdout: true
+      ).trim()
+
+      // Remove "-SNAPSHOT" suffix if present (only at end)
+      def VERSION = VERSION_RAW.replaceAll(/-SNAPSHOT$/, '')
+
+      // Short Git SHA
+      def SHORT_SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+
+      // Jenkins build number
+      def BUILD_NUM = env.BUILD_NUMBER
+
+      // Docker tag safety (A–Z, a–z, 0–9, _, ., -)
+      VERSION = VERSION.replaceAll(/[^A-Za-z0-9_.-]/, '-')
+
+      // Compose human-readable tag: <version>-<build>
+      def VERSION_TAG = "${VERSION}-${BUILD_NUM}"
+
+      echo "Building image with tags: ${VERSION_TAG} and ${SHORT_SHA} (from raw version: ${VERSION_RAW})"
+
+      // Build once with the human-readable tag
+      sh """
+        docker build \
+          --progress=plain \
+          -t ${IMAGE_NAME}:${VERSION_TAG} \
+          .
+      """
+
+      // Add immutable SHA tag pointing to the same image ID
+      sh "docker tag ${IMAGE_NAME}:${VERSION_TAG} ${IMAGE_NAME}:${SHORT_SHA}"
+
+      // Export for push stage
+      env.IMAGE_TAG_VERSION = VERSION_TAG
+      env.IMAGE_TAG_SHA     = SHORT_SHA
+    }
+  }
+}
+
+
+ 
+    stage('Docker Login & Push to ECR') {
+      environment {
+        AWS_REGION     = 'ap-south-1'
+        AWS_ACCOUNT_ID = '203771687516'
+        ECR_REPO_NAME  = 'maven-web-app'
+      }
+      steps {
+        script {
+          // Expect these from the previous stage
+          def IMAGE_NAME  = env.IMAGE_NAME ?: 'maven-web-app'
+          def VERSION_TAG = env.IMAGE_TAG_VERSION   // e.g., "0.0.2-65"
+          def SHA_TAG     = env.IMAGE_TAG_SHA       // e.g., "a1b2c3d"
+    
+          if (!VERSION_TAG || !SHA_TAG) {
+            error "Missing tags: Ensure previous stage sets env.IMAGE_TAG_VERSION and env.IMAGE_TAG_SHA."
+          }
+    
+          def ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          def ECR_REPO_URI = "${ECR_REGISTRY}/${ECR_REPO_NAME}"
+    
+          withAWS(region: AWS_REGION, credentials: 'aws-creds') {
+            // Optional: verify identity
+            sh "aws sts get-caller-identity"
+    
+            // Ensure the ECR repository exists (idempotent) — include region explicitly
+            sh """
+              aws ecr describe-repositories --repository-names ${ECR_REPO_NAME} --region ${AWS_REGION} >/dev/null 2>&1 || \
+              aws ecr create-repository --repository-name ${ECR_REPO_NAME} \
+                --image-scanning-configuration scanOnPush=true \
+                --region ${AWS_REGION}
+            """
+    
+            // Docker login to ECR
+            sh """
+              aws ecr get-login-password --region ${AWS_REGION} | \
+              docker login --username AWS --password-stdin ${ECR_REGISTRY}
+            """
+    
+            // Tag locally to ECR URI
+            sh "docker tag ${IMAGE_NAME}:${VERSION_TAG} ${ECR_REPO_URI}:${VERSION_TAG}"
+            sh "docker tag ${IMAGE_NAME}:${SHA_TAG}     ${ECR_REPO_URI}:${SHA_TAG}"
+    
+            // Push the unique version tag — always
+            sh "docker push ${ECR_REPO_URI}:${VERSION_TAG}"
+    
+            // Check if commit tag exists; skip push if present to avoid immutability error
+            def shaExists = (sh(
+              script: """
+                aws ecr describe-images \
+                  --repository-name ${ECR_REPO_NAME} \
+                  --image-ids imageTag=${SHA_TAG} \
+                  --region ${AWS_REGION} >/dev/null 2>&1
+              """,
+              returnStatus: true
+            ) == 0)
+    
+            if (shaExists) {
+              echo "Commit tag ${ECR_REPO_NAME}:${SHA_TAG} already exists in ECR. Skipping push (immutable)."
+            } else {
+              sh "docker push ${ECR_REPO_URI}:${SHA_TAG}"
+              echo "Pushed commit tag: ${ECR_REPO_URI}:${SHA_TAG}"
+            }
+    
+            // Final message kept inside the same script block (so shaExists is in scope)
+            echo "Pushed to ECR: ${ECR_REPO_URI}:${VERSION_TAG}" +
+                 (shaExists ? " (SHA skipped)" : " and ${ECR_REPO_URI}:${SHA_TAG}")
+          }
+        }
+      }
+    }
+
+}
+}
