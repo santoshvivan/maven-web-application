@@ -1,12 +1,11 @@
 image:
   repository: 203771687516.dkr.ecr.ap-south-1.amazonaws.com/maven-web-app
-  tag: "0.0.2-91"   # Jenkins or ArgoCD Image Updater will change this
+  tag: "0.0.2-95" # Jenkins or ArgoCD Image Updater will change this
   pullPolicy: IfNotPresent
 imagePullSecrets:
-  - name: ecr-pull-secret
+- name: ecr-pull-secret
 replicaCount: 1
-service:  
+service:
   type: ClusterIP
   port: 8080
 resources: {}
-
