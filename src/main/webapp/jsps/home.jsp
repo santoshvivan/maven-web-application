@@ -10,7 +10,7 @@
 </head>
 <body>
 <h1 align="center">Welcome To DevOps </h1>
-<h1 align="center"> New Batch will be start in August 11th at 10.45 AM IST</h1> 
+<h1 align="center"> New Batch will be start in August 12th at 10.45 AM IST</h1> 
 <h1 align="center"> Teaching Real Time scnerios.....</h1>
 <hr>
 <br>
