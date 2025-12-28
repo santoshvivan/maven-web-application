@@ -6,6 +6,10 @@ tools {
 maven 'Maven3.9.10'
 }
 
+options{
+timestamps()
+}
+
 stages {
 
 	stage ("Clean Workspace") {
