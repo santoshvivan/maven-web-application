@@ -1,0 +1,63 @@
+pipeline {
+
+agent any;
+
+tools {
+maven 'Maven3.9.10'
+}
+
+stages {
+
+	stage ("Clean Workspace") {
+			steps {
+				cleanWs()
+				}
+			}
+	
+	stage ("Get the code from GitHub"){
+			steps {
+				git branch: 'development', credentialsId: 'Github-Token-New', url: 'https://github.com/santoshvivan/maven-web-application.git'
+				}
+			}
+	
+	
+	stage ("Build the package in Maven"){
+			steps {
+				sh "mvn clean package"
+			}
+			} 
+	
+	
+	stage('Upload to Nexus') {
+		    steps {
+				withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+				  configFileProvider([configFile(fileId: '1fe9d2c7-6094-48bf-ad93-7cb032f0049e', variable: 'MAVEN_SETTINGS')]) {
+					sh 'mvn -B -s "${MAVEN_SETTINGS}" -DskipTests deploy'
+				  }
+				}
+			  }
+			}
+	
+	stage ('Deploy application into Tomcat server') {
+			steps{
+				withCredentials([sshUserPrivateKey(
+				credentialsId: 'tomcat-ssh-creds', 	// ID of your Jenkins SSH credentials
+				keyFileVariable: 'SSH_KEY', 		// Jenkins will create this variable with the path to the private key
+				usernameVariable: 'SSH_USER')]) {	// Jenkins will create this variable with the username
+				sh "scp -i ${SSH_KEY} -o StrictHostKeyChecking=no target/maven-web-application.war ${SSH_USER}@10.10.18.54:/opt/apache-tomcat-9.0.113/webapps/"
+			        }
+		        }
+	        }  
+	
+		}
+post {
+
+success {
+mail bcc: '', body: '''Thanks
+
+Santosh Panchal''', cc: '', from: '', replyTo: '', subject: 'Build Status : Declarative Pipeline', to: 'panchal.santosh1986@gmail.com'
+}
+
+}
+
+}
