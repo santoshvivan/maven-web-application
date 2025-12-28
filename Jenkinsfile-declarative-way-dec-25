@@ -17,7 +17,8 @@ stages {
 				cleanWs()
 				}
 			}
-	
+
+
 	stage ("Get the code from GitHub"){
 			steps {
 				git branch: 'development', credentialsId: 'Github-Token-New', url: 'https://github.com/santoshvivan/maven-web-application.git'
@@ -30,8 +31,19 @@ stages {
 				sh "mvn clean package"
 			}
 			} 
-	
-	
+
+
+	stage ("Generate the SonarQube Report"){
+			steps {
+				withMaven(maven: 'Maven3.9.10') {
+				withSonarQubeEnv('SonarQube') {
+				  sh 'mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar'
+				}
+			}
+		}
+	}
+
+
 	stage('Upload to Nexus') {
 		    steps {
 				withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
@@ -41,7 +53,8 @@ stages {
 				}
 			  }
 			}
-	
+
+
 	stage ('Deploy application into Tomcat server') {
 			steps{
 				withCredentials([sshUserPrivateKey(
