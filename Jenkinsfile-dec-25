@@ -1,0 +1,65 @@
+node {
+
+def mavenHome = tool name: "Maven3.9.10"
+
+properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '3', daysToKeepStr: '', numToKeepStr: '3')), pipelineTriggers([pollSCM('* * * * *')])])
+
+stage ("Clean Workspace"){
+	cleanWs()
+}
+
+
+stage ("Get the code from GitHub"){
+	git branch: 'development', credentialsId: 'Github-Token-New', url: 'https://github.com/santoshvivan/maven-web-application.git'
+}
+
+
+stage ("Build the package with Maven"){
+	sh "${mavenHome}/bin/mvn clean package"
+}
+
+
+stage('SonarQube Report') {
+    withSonarQubeEnv('SonarQube') {
+      sh """
+        ${mavenHome}/bin/mvn -B \
+          org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+          -Dsonar.projectKey=maven-web-application \
+          -Dsonar.projectName='maven-web-application' \
+      """
+    }
+}
+
+
+stage('Upload to Nexus') {
+	withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+  // Replace THE_REAL_FILE_ID with the actual ID from Managed files
+  configFileProvider([configFile(fileId: '1fe9d2c7-6094-48bf-ad93-7cb032f0049e', variable: 'MAVEN_SETTINGS')]) {
+
+    sh "${mavenHome}/bin/mvn -B -s ${MAVEN_SETTINGS} deploy"
+		}
+	}
+}
+
+
+stage ('Deploy application into Tomcat server') {
+	withCredentials([sshUserPrivateKey(
+    credentialsId: 'tomcat-ssh-creds',    // ID of your Jenkins SSH credentials
+    keyFileVariable: 'SSH_KEY',           // Jenkins will create this variable with the path to the private key
+    usernameVariable: 'SSH_USER'          // Jenkins will create this variable with the username
+)]) {
+    sh "scp -i ${SSH_KEY} -o StrictHostKeyChecking=no target/maven-web-application.war ${SSH_USER}@10.10.18.54:/opt/apache-tomcat-9.0.113/webapps/"
+	}
+}
+
+
+stage ('Send email notification'){
+mail bcc: '', body: '''Hi Team 
+
+PFB status of the jenkins job
+
+Thanks
+Santosh Panchal''', cc: '', from: '', replyTo: '', subject: 'Jenkins Job Status', to: 'panchal.santosh1986@gmail.com'
+}
+
+}
