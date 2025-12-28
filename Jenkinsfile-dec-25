@@ -18,7 +18,7 @@ stage ("Build the package with Maven"){
 	sh "${mavenHome}/bin/mvn clean package"
 }
 
-
+/*
 stage('SonarQube Report') {
     withSonarQubeEnv('SonarQube') {
       sh """
@@ -61,5 +61,5 @@ PFB status of the jenkins job
 Thanks
 Santosh Panchal''', cc: '', from: '', replyTo: '', subject: 'Jenkins Job Status', to: 'panchal.santosh1986@gmail.com'
 }
-
+*/
 }
