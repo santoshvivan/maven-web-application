@@ -15,7 +15,7 @@ sh "${mavenHome}/bin/mvn clean package"
 stage ("Generate the SonarQube Report") {
 sh "${mavenHome}/bin/mvn sonar:sonar"
 }
-
+/*
 stage ("Copy the artifact into Nexus Repo.") {
 sh "${mavenHome}/bin/mvn deploy"
 }
@@ -32,5 +32,5 @@ emailext body: '''Build Over......
 Thanks
 Santosh Panchal''', subject: 'Build Status......', to: 'panchal.santosh1986@gmail.com'
 }
-
+*/
 }
