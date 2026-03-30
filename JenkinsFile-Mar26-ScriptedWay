@@ -1,4 +1,5 @@
-node {
+node('nodes') 
+{
 
 properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '3', daysToKeepStr: '', numToKeepStr: '3')), pipelineTriggers([pollSCM('* * * * *')])])
 
@@ -11,11 +12,11 @@ git branch: 'development', credentialsId: 'Github-Creds', url: 'https://github.c
 stage ("Build the package") {
 sh "${mavenHome}/bin/mvn clean package"
 }
-
+/*
 stage ("Generate the SonarQube Report") {
 sh "${mavenHome}/bin/mvn sonar:sonar"
 }
-/*
+
 stage ("Copy the artifact into Nexus Repo.") {
 sh "${mavenHome}/bin/mvn deploy"
 }
