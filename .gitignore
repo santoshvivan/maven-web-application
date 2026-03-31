@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #Operating System Files
 *.DS_Store
 Thumbs.db
@@ -29,3 +30,9 @@ Thumbs.db
 
 #Visual Studio Code Files
 **/.vscode/
+=======
+.classpath
+.projects
+/node_module
+
+>>>>>>> 36ccbb0 (added .gitignore)
