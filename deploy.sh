@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 i am in master branch....
+=======
+i am in dev branch....
+>>>>>>> 6b8bc33 (updated deploy.sh in dev branch)
 
 this is script file
 
